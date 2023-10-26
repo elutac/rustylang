@@ -25,6 +25,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .help("Sets the source language.")
             )
         .arg(
+            Arg::new("verbose")
+                .long("verbose")
+                .help("Verbose output.")
+                .required(false)
+                .num_args(0)
+            )
+        .arg(
             Arg::new("text")
             .help("Text to translate.")
             .value_name("text")
@@ -54,14 +61,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Serialize the JSON object to a string
     let json_payload = serde_json::to_string(&data).unwrap();
 
-    // Prepare the request body as a JSON payload (you can use other formats as needed)
-    // let json_payload = r#"
-    //     {
-    //         "text" : ["This is a test."],
-    //         "target_lang" : "Value1" 
-    //     }
-    // "#;
-
     // Define authentication token
     let auth_key = std::env::var("DEEPL_AUTH_KEY").expect("DEEPL_AUTH_KEY must be set.");
 
@@ -77,19 +76,36 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .body(json_payload)
         .send()?;
 
-    // Check the response status code
+    // Variable
+    let mut detected_source_language: Option<String> = None;
+
+    // Print response if successfull
     match response.status() {
         StatusCode::OK => {
             // Request was successful (status code 200)
-            println!("Request was successful!");
             // Deserialize the JSON response
             let json_response: serde_json::Value = response.json()?;
-            // Print the JSON response
-            println!("Response JSON: {:#?}", json_response);
+            
+            // Extract the "text" field from the JSON response
+            if let Some(translations) = json_response["translations"].as_array() {
+                if let Some(translation) = translations.get(0) {
+                    if let Some(text) = translation["text"].as_str() {
+                        println!("{}", text);
+                    }
+                    if let Some(detected_lang) = translation["detected_source_language"].as_str() {
+                        detected_source_language = Some(detected_lang.to_string());
+                    }
+                }
+            }
+
+            if matches.get_flag("verbose") {
+                println!("");
+                println!("Detected Source Language: {}", detected_source_language.unwrap());
+                println!("Target Language: {}", matches.get_one::<String>("tolang").unwrap());
+            };
         }
         _ => {
             // Request failed with an error status code
-            println!("Request failed with status code: {:?}", response.status());
             // You can handle error responses here
         }
     }

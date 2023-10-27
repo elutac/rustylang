@@ -92,6 +92,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             )
         .arg(
             Arg::new("verbose")
+                .short('v')
                 .long("verbose")
                 .help("Verbose output.")
                 .required(false)

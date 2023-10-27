@@ -146,36 +146,47 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Variable
     let mut detected_source_language: Option<String> = None;
 
-    // Print response if successfull
+    // Print response if successful
     match response.status() {
         StatusCode::OK => {
             // Request was successful (status code 200)
             // Deserialize the JSON response
-            let json_response: serde_json::Value = response.json()?;
+            match response.json::<serde_json::Value>() {
+                Ok(json_response) => {
+                    // Extract the "text" field from the JSON response
+                    if let Some(translations) = json_response["translations"].as_array() {
+                        if let Some(translation) = translations.get(0) {
+                            if let Some(text) = translation["text"].as_str() {
+                                println!("{}", text);
+                            }
+                            if let Some(detected_lang) = translation["detected_source_language"].as_str() {
+                                detected_source_language = Some(detected_lang.to_string());
+                            }
+                        }
+                    }
             
-            // Extract the "text" field from the JSON response
-            if let Some(translations) = json_response["translations"].as_array() {
-                if let Some(translation) = translations.get(0) {
-                    if let Some(text) = translation["text"].as_str() {
-                        println!("{}", text);
-                    }
-                    if let Some(detected_lang) = translation["detected_source_language"].as_str() {
-                        detected_source_language = Some(detected_lang.to_string());
-                    }
+                    if matches.get_flag("verbose") {
+                        println!("");
+                        println!("Input: {}", matches.get_one::<String>("text").unwrap());
+                        println!("Detected Language: {}", detected_source_language.unwrap_or_else(|| "N/A".to_string()));
+                        println!("Target Language: {}", matches.get_one::<String>("tolang").unwrap());
+                    };
+                },
+                Err(err) => {
+                    eprintln!("Failed to deserialize JSON response: {}", err);
                 }
             }
-
-            if matches.get_flag("verbose") {
-                println!("");
-                println!("Detected Source Language: {}", detected_source_language.unwrap());
-                println!("Target Language: {}", matches.get_one::<String>("tolang").unwrap());
-            };
-        }
-        _ => {
+        },
+        status => {
             // Request failed with an error status code
-            // You can handle error responses here
+            eprintln!("Request failed with status: {}", status);
+            match response.text() {
+                Ok(text) => eprintln!("Response text: {}", text),
+                Err(err) => eprintln!("Failed to read response text: {}", err),
+            }
         }
     }
+
 
     Ok(())
 }

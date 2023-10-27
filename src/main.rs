@@ -3,7 +3,7 @@ use reqwest::header::HeaderMap;
 use reqwest::StatusCode;
 use dotenv::dotenv;
 use serde_json::json;
-use clap::{command, Arg};
+use clap::{command, Arg, builder::PossibleValue};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create a clap App to parse command-line arguments
@@ -14,8 +14,43 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .long("tolang")
                 .value_name("target language")
                 .help("Sets the target language.")
-                .required(false)
-                .default_value("EN")
+                .required(true)
+                //.default_value("EN")
+                .value_parser([
+                    PossibleValue::new("BG").help("Bulgarian"),
+                    PossibleValue::new("CS").help("Czech"),
+                    PossibleValue::new("DA").help("Danish"),
+                    PossibleValue::new("DE").help("German"),
+                    PossibleValue::new("EL").help("Greek"),
+                    PossibleValue::new("EN").help("English (unspecified variant for backward compatibility; please select EN-GB or EN-US instead)"),
+                    PossibleValue::new("EN-GB").help("English (British)"),
+                    PossibleValue::new("EN-US").help("English (American)"),
+                    PossibleValue::new("ES").help("Spanish"),
+                    PossibleValue::new("ET").help("Estonian"),
+                    PossibleValue::new("FI").help("Finnish"),
+                    PossibleValue::new("FR").help("French"),
+                    PossibleValue::new("HU").help("Hungarian"),
+                    PossibleValue::new("ID").help("Indonesian"),
+                    PossibleValue::new("IT").help("Italian"),
+                    PossibleValue::new("JA").help("Japanese"),
+                    PossibleValue::new("KO").help("Korean"),
+                    PossibleValue::new("LT").help("Lithuanian"),
+                    PossibleValue::new("LV").help("Latvian"),
+                    PossibleValue::new("NB").help("Norwegian (Bokmål)"),
+                    PossibleValue::new("NL").help("Dutch"),
+                    PossibleValue::new("PL").help("Polish"),
+                    PossibleValue::new("PT").help("Portuguese (unspecified variant for backward compatibility; please select PT-BR or PT-PT instead)"),
+                    PossibleValue::new("PT-BR").help("Portuguese (Brazilian)"),
+                    PossibleValue::new("PT-PT").help("Portuguese (all Portuguese varieties excluding Brazilian Portuguese)"),
+                    PossibleValue::new("RO").help("Romanian"),
+                    PossibleValue::new("RU").help("Russian"),
+                    PossibleValue::new("SK").help("Slovak"),
+                    PossibleValue::new("SL").help("Slovenian"),
+                    PossibleValue::new("SV").help("Swedish"),
+                    PossibleValue::new("TR").help("Turkish"),
+                    PossibleValue::new("UK").help("Ukrainian"),
+                    PossibleValue::new("ZH").help("Chinese (simplified)")
+                ])
             )
         .arg(
             Arg::new("fromlang")
@@ -23,6 +58,37 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .long("fromlang")
                 .value_name("source language")
                 .help("Sets the source language.")
+                .value_parser([
+                    PossibleValue::new("BG").help("Bulgarian"),
+                    PossibleValue::new("CS").help("Czech"),
+                    PossibleValue::new("DA").help("Danish"),
+                    PossibleValue::new("DE").help("German"),
+                    PossibleValue::new("EL").help("Greek"),
+                    PossibleValue::new("EN").help("English"),
+                    PossibleValue::new("ES").help("Spanish"),
+                    PossibleValue::new("ET").help("Estonian"),
+                    PossibleValue::new("FI").help("Finnish"),
+                    PossibleValue::new("FR").help("French"),
+                    PossibleValue::new("HU").help("Hungarian"),
+                    PossibleValue::new("ID").help("Indonesian"),
+                    PossibleValue::new("IT").help("Italian"),
+                    PossibleValue::new("JA").help("Japanese"),
+                    PossibleValue::new("KO").help("Korean"),
+                    PossibleValue::new("LT").help("Lithuanian"),
+                    PossibleValue::new("LV").help("Latvian"),
+                    PossibleValue::new("NB").help("Norwegian (Bokmål)"),
+                    PossibleValue::new("NL").help("Dutch"),
+                    PossibleValue::new("PL").help("Polish"),
+                    PossibleValue::new("PT").help("Portuguese (all Portuguese varieties mixed)"),
+                    PossibleValue::new("RO").help("Romanian"),
+                    PossibleValue::new("RU").help("Russian"),
+                    PossibleValue::new("SK").help("Slovak"),
+                    PossibleValue::new("SL").help("Slovenian"),
+                    PossibleValue::new("SV").help("Swedish"),
+                    PossibleValue::new("TR").help("Turkish"),
+                    PossibleValue::new("UK").help("Ukrainian"),
+                    PossibleValue::new("ZH").help("Chinese"),
+                ])
             )
         .arg(
             Arg::new("verbose")

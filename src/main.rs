@@ -1,9 +1,11 @@
+use std::time::Instant;
 use reqwest::blocking::Client;
 use reqwest::header::HeaderMap;
 use reqwest::StatusCode;
 use dotenv::dotenv;
 use serde_json::json;
-use clap::{command, Arg, builder::PossibleValue};
+use clap::{command, Arg, builder::PossibleValue, ArgGroup};
+use cli_clipboard;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create a clap App to parse command-line arguments
@@ -91,6 +93,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 ])
             )
         .arg(
+            Arg::new("copytoclipboard")
+                .short('c')
+                .long("copy")
+                .help("Copy output to clipboard.")
+                .required(false)
+                .num_args(0)
+            )
+        .arg(
+            Arg::new("pastefromclipboard")
+                .short('p')
+                .long("paste")
+                .help("Paste input from clipboard.")
+                .required(false)
+                .num_args(0)
+            )
+        .arg(
             Arg::new("verbose")
                 .short('v')
                 .long("verbose")
@@ -102,9 +120,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             Arg::new("text")
             .help("Text to translate.")
             .value_name("text")
-            .required(true)
             .index(1)
         )
+		.group(ArgGroup::new("input")
+			.args(["text", "pastefromclipboard"])
+			.required(true))
         .get_matches();
     
     // Load environment variables
@@ -117,7 +137,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let url = "https://api-free.deepl.com/v2/translate";
 
     // Create an array of values for text
-    let text = vec![matches.get_one::<String>("text").unwrap()];
+	let text: Vec<String> = if matches.get_flag("pastefromclipboard") {
+		match cli_clipboard::get_contents() {
+			Ok(content) => vec![content],
+			Err(e) => {
+				eprintln!("Failed to get content from clipboard: {}", e);
+				vec![]
+			}
+		}
+	} else {
+		vec![matches.get_one::<String>("text").unwrap().clone()]
+	};
 
     // Create a JSON object with the variables
     let data = json!({
@@ -135,6 +165,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut headers = HeaderMap::new();
     headers.insert("Content-Type", "application/json".parse()?);
     headers.insert("Authorization", ("DeepL-Auth-Key ".to_owned() + &auth_key).parse()?);
+
+    // Start measuring time before sending the request
+    let start = Instant::now();
     
     // Send the POST request
     let response = client
@@ -142,6 +175,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .headers(headers)
         .body(json_payload)
         .send()?;
+
+    // Measure the time after receiving the response
+    let duration = start.elapsed();
 
     // Variable
     let mut detected_source_language: Option<String> = None;
@@ -158,6 +194,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         if let Some(translation) = translations.get(0) {
                             if let Some(text) = translation["text"].as_str() {
                                 println!("{}", text);
+                                
+                                if matches.get_flag("copytoclipboard") {
+                                    cli_clipboard::set_contents(text.to_owned()).unwrap();
+                                }
                             }
                             if let Some(detected_lang) = translation["detected_source_language"].as_str() {
                                 detected_source_language = Some(detected_lang.to_string());
@@ -170,6 +210,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         println!("Input: {}", matches.get_one::<String>("text").unwrap());
                         println!("Detected Language: {}", detected_source_language.unwrap_or_else(|| "N/A".to_string()));
                         println!("Target Language: {}", matches.get_one::<String>("tolang").unwrap());
+                        println!("Status Code: {}", StatusCode::OK);
+                        println!("Response Time: {:?}", duration);
                     };
                 },
                 Err(err) => {
@@ -186,7 +228,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     }
-
 
     Ok(())
 }

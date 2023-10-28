@@ -95,7 +95,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .arg(
             Arg::new("copytoclipboard")
                 .short('c')
-                .long("copy-to-clipboard")
+                .long("copy")
                 .help("Copy output to clipboard.")
                 .required(false)
                 .num_args(0)
@@ -103,7 +103,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .arg(
             Arg::new("pastefromclipboard")
                 .short('p')
-                .long("paste-from-clipboard")
+                .long("paste")
                 .help("Paste input from clipboard.")
                 .required(false)
                 .num_args(0)

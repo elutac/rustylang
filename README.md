@@ -40,7 +40,7 @@ To view all options execute:
 ./rustylang --help
 ```
 
-### Example
+### Examples
 
 Translate text directly with specified target language:
 

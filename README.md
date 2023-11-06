@@ -29,7 +29,7 @@ This command will create an executable file in the `target/release` directory.
 Run the RustyLang tool using the following syntax:
 
 ```bash
-./rustylang -t <target_language> "Text to translate"
+./rustylang [OPTIONS] --tolang <target language> <text|--paste>
 ```
 
 ### Options
@@ -42,11 +42,23 @@ To view all options execute:
 
 ### Example
 
+Translate text directly with specified target language:
+
 ```bash
 ./rustylang -t DE "Hello, world!"
 ```
 
-This command will translate "Hello, world!" to German and print the translated text.
+Translate text from the clipboard and copy the result back to the clipboard:
+
+```bash
+./rustylang -t DE -c -p
+```
+
+Enable verbose output:
+
+```bash
+./rustylang -t DE -v "How are you?"
+```
 
 ## Environment Variables
 
@@ -59,6 +71,8 @@ You can set this environment variable by creating a .env file in the project dir
 ```bash
 DEEPL_AUTH_KEY=your_auth_key_here
 ```
+
+If you add the tool to your path, you can also export the environment variable in your shell.
 
 ## Supported Languages
 
